@@ -1,0 +1,38 @@
+name: Auto Label Issues
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label issues based on keywords
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue = context.payload.issue;
+            const body = (issue.body || '').toLowerCase();
+            const title = (issue.title || '').toLowerCase();
+            const content = body + ' ' + title;
+            
+            const labelsToAdd = [];
+            
+            if (content.includes('error')) {
+              labelsToAdd.push('bug');
+            }
+            
+            if (content.includes('add')) {
+              labelsToAdd.push('feature');
+            }
+            
+            if (labelsToAdd.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labelsToAdd
+              });
+            }
